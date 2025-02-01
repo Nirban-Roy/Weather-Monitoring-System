@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Weather App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom Styles -->
+    <style>
+        body {
+            background: linear-gradient(-45deg, #1f2937, #111827, #1f2937, #111827);
+            background-size: 400% 400%;
+            animation: gradient-bg 15s ease infinite;
+        }
+
+        @keyframes gradient-bg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Custom cursor trail */
+        .trail {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: rgba(116, 119, 191, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            transition: transform 0.1s ease-out, opacity 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen text-white">
+    <!-- Cursor Trail Container -->
+    <div id="trail-container"></div>
+
+    <div class="w-full max-w-md p-8 space-y-8 bg-gray-800 bg-opacity-70 rounded-xl shadow-lg">
+        <div class="text-center">
+            <h2 class="mt-6 text-3xl font-extrabold">Weather Forecast Login</h2>
+        </div>
+        <div id="message" class="text-red-500 text-center"></div>
+        <form id="login-form" class="mt-8 space-y-6">
+            <div class="rounded-md shadow-sm -space-y-px">
+                <div class="mb-4">
+                    <label for="username" class="sr-only">Username</label>
+                    <input id="username" name="username" type="text" autocomplete="username" required
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-gray-700 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                        placeholder="Username">
+                </div>
+                <div>
+                    <label for="password" class="sr-only">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-gray-700 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                        placeholder="Password">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="text-sm">
+                    <a href="reset_password.html" class="font-medium text-indigo-600 hover:text-indigo-500">
+                        Forgot your password?
+                    </a>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit"
+                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300">
+                    Login
+                </button>
+            </div>
+            <div class="text-center text-sm">
+                <a href="register.html" class="font-medium text-indigo-600 hover:text-indigo-500">
+                    Don't have an account? Register
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Custom Scripts -->
+    <script>
+        // Handle user login
+        document.getElementById('login-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    // Check for admin credentials
+    if (username === 'admin' && password === 'admin123') {
+        // Redirect to admin page
+        window.location.href = 'admin.html';
+        return;
+    }
+
+    // Check for regular user credentials
+    const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+    const account = accounts.find(acc => acc.username === username && acc.password === password);
+
+    if (account) {
+        // Successful login
+        window.location.href = 'dashboard.html'; // Redirect to the dashboard or main page
+    } else {
+        // Display error message
+        document.getElementById('message').textContent = 'Invalid username or password. Please try again.';
+    }
+});
+
+        // Cursor trail implementation
+        document.addEventListener('mousemove', function(e) {
+            const trail = document.createElement('div');
+            trail.className = 'trail';
+            trail.style.left = `${e.clientX}px`;
+            trail.style.top = `${e.clientY}px`;
+            document.body.appendChild(trail);
+            setTimeout(() => {
+                trail.style.opacity = '0';
+                trail.style.transform = 'scale(2)';
+                setTimeout(() => {
+                    trail.remove();
+                }, 300);
+            }, 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile - Weather App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom Styles -->
+    <style>
+        body {
+            background: linear-gradient(-45deg, #1f2937, #111827, #1f2937, #111827);
+            background-size: 400% 400%;
+            animation: gradient-bg 15s ease infinite;
+        }
+
+        @keyframes gradient-bg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Custom cursor trail */
+        .trail {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: rgba(116, 119, 191, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            transition: transform 0.1s ease-out, opacity 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen text-white">
+    <!-- Cursor Trail Container -->
+    <div id="trail-container"></div>
+
+    <div class="w-full max-w-md p-8 space-y-8 bg-gray-800 bg-opacity-70 rounded-xl shadow-lg">
+        <div class="text-center">
+            <h2 class="mt-6 text-3xl font-extrabold">Edit Profile</h2>
+        </div>
+        <form id="profile-form" class="mt-8 space-y-6">
+            <div class="rounded-md shadow-sm">
+                <div class="mb-4">
+                    <label for="username" class="sr-only">Username</label>
+                    <input id="username" name="username" type="text" autocomplete="username" required
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-gray-700 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="Username">
+                </div>
+                <div class="mb-4">
+                    <label for="email" class="sr-only">Email</label>
+                    <input id="email" name="email" type="email" autocomplete="email" required
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="Email">
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="sr-only">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="new-password"
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="Password">
+                </div>
+            </div>
+            <div>
+                <button type="submit"
+                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Custom Scripts -->
+    <script>
+        // Load current user details from local storage
+const currentUser = localStorage.getItem('currentUser');
+const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+
+// Debug messages
+console.log('Current User:', currentUser);
+console.log('Accounts:', accounts);
+
+if (!currentUser || !accounts.some(acc => acc.username === currentUser)) {
+    alert('No user is logged in. Redirecting to login page.');
+    window.location.href = 'index.html';
+} else {
+    const user = accounts.find(acc => acc.username === currentUser);
+    document.getElementById('username').value = user.username;
+    document.getElementById('email').value = user.email;
+    document.getElementById('password').value = user.password;
+}
+
+// Save changes to local storage
+document.getElementById('profile-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const updatedUsername = document.getElementById('username').value;
+    const updatedEmail = document.getElementById('email').value;
+    const updatedPassword = document.getElementById('password').value;
+
+    const userIndex = accounts.findIndex(acc => acc.username === currentUser);
+    if (userIndex !== -1) {
+        accounts[userIndex] = {
+            username: updatedUsername,
+            email: updatedEmail,
+            password: updatedPassword
+        };
+        localStorage.setItem('accounts', JSON.stringify(accounts));
+        localStorage.setItem('currentUser', updatedUsername); // Update current user in local storage
+        alert('Profile updated successfully!');
+    } else {
+        alert('Error updating profile. Please try again.');
+    }
+});
+
+    </script>
+</body>
+</html>

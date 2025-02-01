@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Weather Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-gray-900 text-white font-poppins">
+    <!-- Navbar -->
+    <nav class="flex justify-between items-center p-6 bg-gray-800 shadow-md">
+      <h1 class="text-4xl font-semibold tracking-wider">Weather<span class="text-yellow-400">Pulse</span></h1>
+      <div class="relative">
+        <button id="profileButton" class="flex items-center space-x-2">
+          <span id="usernameDisplay">Hi, User</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.33 0-10 1.67-10 5v1h20v-1c0-3.33-6.67-5-10-5z" />
+          </svg>
+        </button>
+        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg text-gray-800">
+          <button id="deleteUserBtn" class="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-100">Delete Account</button>
+          <button id="logoutBtn" class="block w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-100">Logout</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Weather Parameters -->
+    <div class="container mx-auto p-8 text-center">
+      <h2 class="text-3xl font-semibold mb-4 border-b pb-2 border-gray-500">Weather Parameters</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-gray-700 p-6 rounded-lg shadow-lg" id="temperature">
+          <h3 class="font-semibold text-lg">Temperature</h3>
+          <p class="text-2xl font-bold">--</p>
+        </div>
+        <div class="bg-gray-700 p-6 rounded-lg shadow-lg" id="humidity">
+          <h3 class="font-semibold text-lg">Humidity</h3>
+          <p class="text-2xl font-bold">--</p>
+        </div>
+        <div class="bg-gray-700 p-6 rounded-lg shadow-lg" id="co">
+          <h3 class="font-semibold text-lg">CO Levels</h3>
+          <p class="text-2xl font-bold">--</p>
+        </div>
+        <div class="bg-gray-700 p-6 rounded-lg shadow-lg" id="pressure">
+          <h3 class="font-semibold text-lg">Pressure</h3>
+          <p class="text-2xl font-bold">--</p>
+        </div>
+        <div class="bg-gray-700 p-6 rounded-lg shadow-lg" id="altitude">
+          <h3 class="font-semibold text-lg">Altitude</h3>
+          <p class="text-2xl font-bold">--</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weather Forecast -->
+    <div class="container mx-auto p-8 text-center">
+      <h2 class="text-3xl font-semibold mb-4 border-b pb-2 border-gray-500">Weather Forecast</h2>
+      <div id="forecast" class="text-xl">Fetching forecast...</div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+      // MQTT Client
+      const client = mqtt.connect("ws://test.mosquitto.org:8080");
+      const topics = {
+        "SDI/temperature": "temperature",
+        "SDI/humidity": "humidity",
+        "SDI/co": "co",
+        "SDI/pressure": "pressure",
+        "SDI/altitude": "altitude",
+        "SDI/forecast": "forecast",
+      };
+
+      client.on("connect", () => {
+        Object.keys(topics).forEach((topic) => client.subscribe(topic));
+      });
+
+      client.on("message", (topic, message) => {
+        const elementId = topics[topic];
+        if (elementId) {
+          document.getElementById(elementId).querySelector("p").textContent = message.toString();
+        }
+      });
+
+      // Profile Dropdown
+      document.getElementById("profileButton").addEventListener("click", () => {
+        const dropdown = document.getElementById("profileDropdown");
+        dropdown.classList.toggle("hidden");
+      });
+
+      // Delete Account with Confirmation
+      document.getElementById("deleteUserBtn").addEventListener("click", () => {
+        const confirmation = prompt("Type DELETE in capital letters to confirm account deletion:");
+        if (confirmation === "DELETE") {
+          const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
+          if (accounts.length > 0) {
+            accounts.pop();
+            localStorage.setItem("accounts", JSON.stringify(accounts));
+            alert("Account deleted successfully!");
+            window.location.href = "index.html";
+          } else {
+            alert("No accounts found.");
+          }
+        } else {
+          alert("Account deletion canceled.");
+        }
+      });
+
+      // Logout
+      document.getElementById("logoutBtn").addEventListener("click", () => {
+        localStorage.removeItem("currentUser");
+        window.location.href = "index.html";
+      });
+
+      // Load Current User
+      const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
+      const currentUser = localStorage.getItem("currentUser");
+      const user = accounts.find((acc) => acc.username === currentUser);
+      document.getElementById("usernameDisplay").textContent = user ? `Hi, ${user.username}` : "Hi, User";
+    </script>
+  </body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - Weather App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom Styles -->
+    <style>
+        body {
+            background: linear-gradient(-45deg, #1f2937, #111827, #1f2937, #111827);
+            background-size: 400% 400%;
+            animation: gradient-bg 15s ease infinite;
+        }
+
+        @keyframes gradient-bg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Custom cursor trail */
+        .trail {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: rgba(116, 119, 191, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            transition: transform 0.1s ease-out, opacity 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen text-white">
+    <!-- Cursor Trail Container -->
+    <div id="trail-container"></div>
+
+    <div class="w-full max-w-md p-8 space-y-8 bg-gray-800 bg-opacity-70 rounded-xl shadow-lg">
+        <div class="text-center">
+            <h2 class="mt-6 text-3xl font-extrabold">Register for Weather App</h2>
+        </div>
+        
+        <form id="registration-form" class="mt-8 space-y-6">
+            <div class="rounded-md shadow-sm space-y-4">
+                <div class="mb-4">
+                    <label for="username" class="sr-only">Username</label>
+                    <input id="username" name="username" type="text" autocomplete="username" required
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-gray-700 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                        placeholder="Username">
+                </div>
+                <div class="mb-4">
+                    <label for="email" class="sr-only">Email</label>
+                    <input id="email" name="email" type="email" autocomplete="email" required
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                        placeholder="Email">
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="sr-only">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="new-password" required
+                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-gray-700 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                        placeholder="Password">
+                </div>
+            </div>
+
+            <div>
+                <button type="submit"
+                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300">
+                    Register
+                </button>
+            </div>
+            <div class="text-center text-sm mt-4">
+              <a href="index.html" class="font-medium text-indigo-600 hover:text-indigo-500">
+                 Already have an account? Login
+              </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Custom Scripts -->
+    <script>
+        // Handle user registration
+        document.getElementById('registration-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+
+            // Check if the user already exists
+            if (accounts.find(acc => acc.username === username)) {
+                alert('Username already exists. Please choose a different username.');
+                return;
+            }
+
+            // If there are already 10 accounts, remove the oldest one
+            if (accounts.length >= 10) {
+                accounts.shift(); // Remove the first account (FIFO)
+            }
+
+            // Add the new account
+            accounts.push({ username, email, password });
+            localStorage.setItem('accounts', JSON.stringify(accounts));
+
+            alert('Registration successful!');
+            window.location.href = 'index.html'; // Redirect to index.html after successful registration
+        });
+
+        // Cursor trail implementation
+        document.addEventListener('mousemove', function(e) {
+            const trail = document.createElement('div');
+            trail.className = 'trail';
+            trail.style.left = `${e.clientX}px`;
+            trail.style.top = `${e.clientY}px`;
+            document.body.appendChild(trail);
+            setTimeout(() => {
+                trail.style.opacity = '0';
+                trail.style.transform = 'scale(2)';
+                setTimeout(() => {
+                    trail.remove();
+                }, 300);
+            }, 100);
+        });
+    </script>
+</body>
+</html>
