@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,17 +5,28 @@
     <title>Weather Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF and AutoTable for PDF report generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
   </head>
   <body class="bg-gray-900 text-white font-poppins">
     <!-- Navbar -->
     <nav class="flex justify-between items-center p-6 bg-gray-800 shadow-md">
-      <h1 class="text-4xl font-semibold tracking-wider">Weather<span class="text-yellow-400">Pulse</span></h1>
+      <h1 class="text-4xl font-semibold tracking-wider">
+        Weather<span class="text-yellow-400">Pulse</span>
+      </h1>
       <div class="relative">
         <button id="profileButton" class="flex items-center space-x-2">
           <span id="usernameDisplay">Hi, User</span>
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.33 0-10 1.67-10 5v1h20v-1c0-3.33-6.67-5-10-5z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 14c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.33 0-10 1.67-10 5v1h20v-1c0-3.33-6.67-5-10-5z"
+            />
           </svg>
         </button>
         <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg text-gray-800">
@@ -29,26 +39,38 @@
     <!-- Weather Parameters -->
     <div class="container mx-auto p-8 text-center">
       <h2 class="text-3xl font-semibold mb-4 border-b pb-2 border-gray-500">Weather Parameters</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-gray-700 p-6 rounded-lg shadow-lg" id="temperature">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 justify-items-center">
+        <!-- Temperature Card -->
+        <div class="bg-gray-700 p-6 rounded-lg shadow-lg w-full max-w-md" id="temperature">
           <h3 class="font-semibold text-lg">Temperature</h3>
-          <p class="text-2xl font-bold">--</p>
+          <p class="text-2xl font-bold" id="temperatureValue">--</p>
+          <div class="relative h-40">
+            <canvas id="temperatureChart"></canvas>
+          </div>
         </div>
-        <div class="bg-gray-700 p-6 rounded-lg shadow-lg" id="humidity">
+        <!-- Humidity Card -->
+        <div class="bg-gray-700 p-6 rounded-lg shadow-lg w-full max-w-md" id="humidity">
           <h3 class="font-semibold text-lg">Humidity</h3>
-          <p class="text-2xl font-bold">--</p>
+          <p class="text-2xl font-bold" id="humidityValue">--</p>
+          <div class="relative h-40">
+            <canvas id="humidityChart"></canvas>
+          </div>
         </div>
-        <div class="bg-gray-700 p-6 rounded-lg shadow-lg" id="co">
+        <!-- CO Levels Card -->
+        <div class="bg-gray-700 p-6 rounded-lg shadow-lg w-full max-w-md" id="co">
           <h3 class="font-semibold text-lg">CO Levels</h3>
-          <p class="text-2xl font-bold">--</p>
+          <p class="text-2xl font-bold" id="coValue">--</p>
+          <div class="relative h-40">
+            <canvas id="coChart"></canvas>
+          </div>
         </div>
-        <div class="bg-gray-700 p-6 rounded-lg shadow-lg" id="pressure">
+        <!-- Pressure Card -->
+        <div class="bg-gray-700 p-6 rounded-lg shadow-lg w-full max-w-md" id="pressure">
           <h3 class="font-semibold text-lg">Pressure</h3>
-          <p class="text-2xl font-bold">--</p>
-        </div>
-        <div class="bg-gray-700 p-6 rounded-lg shadow-lg" id="altitude">
-          <h3 class="font-semibold text-lg">Altitude</h3>
-          <p class="text-2xl font-bold">--</p>
+          <p class="text-2xl font-bold" id="pressureValue">--</p>
+          <div class="relative h-40">
+            <canvas id="pressureChart"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -59,31 +81,169 @@
       <div id="forecast" class="text-xl">Fetching forecast...</div>
     </div>
 
+    <!-- Report Download Section -->
+    <div class="container mx-auto p-8 text-center">
+      <h2 class="text-3xl font-semibold mb-4 border-b pb-2 border-gray-500">Download Data Report</h2>
+      <div class="flex justify-center space-x-4">
+        <button id="downloadCSV" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">Download CSV</button>
+        <button id="downloadPDF" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">Download PDF</button>
+      </div>
+    </div>
+
     <!-- Scripts -->
     <script>
-      // MQTT Client
+      // MQTT Client Setup
       const client = mqtt.connect("wss://test.mosquitto.org:8081");
+      // Topics mapping (altitude removed)
       const topics = {
         "SDI/temperature": "temperature",
         "SDI/humidity": "humidity",
         "SDI/co": "co",
         "SDI/pressure": "pressure",
-        "SDI/altitude": "altitude",
-        "SDI/forecast": "forecast",
+        "SDI/forecast": "forecast"
       };
 
       client.on("connect", () => {
         Object.keys(topics).forEach((topic) => client.subscribe(topic));
       });
 
+      // Initialize Chart.js for each numeric data field and maintain a history (max 20 data points)
+      const charts = {};
+      const dataHistory = {
+        temperature: [],
+        humidity: [],
+        co: [],
+        pressure: []
+      };
+
+      function createChart(elementId) {
+        const ctx = document.getElementById(elementId + "Chart").getContext("2d");
+        return new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: [],
+            datasets: [{
+              label: elementId.charAt(0).toUpperCase() + elementId.slice(1),
+              data: [],
+              fill: false,
+              borderColor: "rgb(255, 205, 86)",
+              tension: 0.1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { display: false }
+            }
+          }
+        });
+      }
+
+      // Create charts for each parameter
+      charts.temperature = createChart("temperature");
+      charts.humidity = createChart("humidity");
+      charts.co = createChart("co");
+      charts.pressure = createChart("pressure");
+
+      // Handle incoming MQTT messages
       client.on("message", (topic, message) => {
         const elementId = topics[topic];
-        if (elementId) {
-          document.getElementById(elementId).querySelector("p").textContent = message.toString();
+        if (elementId && elementId !== "forecast") {
+          const value = parseFloat(message.toString());
+          let unit = "";
+          switch (elementId) {
+            case "temperature":
+              unit = "°C";
+              break;
+            case "humidity":
+              unit = "%";
+              break;
+            case "co":
+              unit = "ppm";
+              break;
+            case "pressure":
+              unit = "hPa";
+              break;
+          }
+          // Update the numeric display with unit
+          document.getElementById(elementId + "Value").textContent = value + " " + unit;
+          // Update chart data (maintaining a history of up to 20 values)
+          dataHistory[elementId].push(value);
+          if (dataHistory[elementId].length > 20) {
+            dataHistory[elementId].shift();
+          }
+          const chart = charts[elementId];
+          chart.data.labels = dataHistory[elementId].map((_, index) => index + 1);
+          chart.data.datasets[0].data = dataHistory[elementId];
+          chart.update();
+        } else if (elementId === "forecast") {
+          document.getElementById("forecast").textContent = message.toString();
         }
       });
 
-      // Profile Dropdown
+      // Generate CSV Report
+      function generateCSV() {
+        // Determine the maximum number of data points among all parameters
+        const n = Math.max(
+          dataHistory.temperature.length,
+          dataHistory.humidity.length,
+          dataHistory.co.length,
+          dataHistory.pressure.length
+        );
+        let csvContent = "Index,Temperature (°C),Humidity (%),CO (ppm),Pressure (hPa)\n";
+        for (let i = 0; i < n; i++) {
+          const temp = dataHistory.temperature[i] !== undefined ? dataHistory.temperature[i] : "";
+          const hum = dataHistory.humidity[i] !== undefined ? dataHistory.humidity[i] : "";
+          const co = dataHistory.co[i] !== undefined ? dataHistory.co[i] : "";
+          const pres = dataHistory.pressure[i] !== undefined ? dataHistory.pressure[i] : "";
+          csvContent += (i + 1) + "," + temp + "," + hum + "," + co + "," + pres + "\n";
+        }
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", "weather_data_report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      // Generate PDF Report using jsPDF and AutoTable
+      function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text("Weather Data Report", 14, 22);
+        doc.setFontSize(12);
+        const headers = [["Index", "Temperature (°C)", "Humidity (%)", "CO (ppm)", "Pressure (hPa)"]];
+        const n = Math.max(
+          dataHistory.temperature.length,
+          dataHistory.humidity.length,
+          dataHistory.co.length,
+          dataHistory.pressure.length
+        );
+        const data = [];
+        for (let i = 0; i < n; i++) {
+          const temp = dataHistory.temperature[i] !== undefined ? dataHistory.temperature[i] : "";
+          const hum = dataHistory.humidity[i] !== undefined ? dataHistory.humidity[i] : "";
+          const co = dataHistory.co[i] !== undefined ? dataHistory.co[i] : "";
+          const pres = dataHistory.pressure[i] !== undefined ? dataHistory.pressure[i] : "";
+          data.push([i + 1, temp, hum, co, pres]);
+        }
+        doc.autoTable({
+          head: headers,
+          body: data,
+          startY: 30
+        });
+        doc.save("weather_data_report.pdf");
+      }
+
+      // Event listeners for download buttons
+      document.getElementById("downloadCSV").addEventListener("click", generateCSV);
+      document.getElementById("downloadPDF").addEventListener("click", generatePDF);
+
+      // Profile Dropdown functionality
       document.getElementById("profileButton").addEventListener("click", () => {
         const dropdown = document.getElementById("profileDropdown");
         dropdown.classList.toggle("hidden");
@@ -107,7 +267,7 @@
         }
       });
 
-      // Logout
+      // Logout functionality
       document.getElementById("logoutBtn").addEventListener("click", () => {
         localStorage.removeItem("currentUser");
         window.location.href = "index.html";
